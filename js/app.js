@@ -82,6 +82,7 @@
   }
 
   function loadData() {
+    const hadSavedData = !!localStorage.getItem(STORAGE_DATA_KEY);
     let categories;
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_DATA_KEY) || 'null');
@@ -89,9 +90,15 @@
     } catch (e) {
       categories = essDefaultData();
     }
-    if (!localStorage.getItem(STORAGE_DATA_KEY)) {
+
+    if (hadSavedData) {
+      const migrated = essEnsureFavoriteCategories(categories);
+      categories = migrated.categories;
+      if (migrated.changed) persistData(categories);
+    } else {
       persistData(categories);
     }
+
     let history = [];
     try { history = JSON.parse(localStorage.getItem(STORAGE_HISTORY_KEY) || '[]'); } catch (e) { history = []; }
     state.categories = categories;

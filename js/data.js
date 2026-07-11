@@ -13,14 +13,40 @@ const ESS_DEFAULT_DATA_RAW = [
   ['🍕', 'Gemütliche Abende', ['Selbstgemachte Pizza', 'Flammkuchen', 'Raclette', 'Grillabend mit Fleisch und Gemüse', 'Burgerabend', 'Taco-Abend', 'Sushi-Abend']]
 ];
 
+// Shared favorite categories, always visible to both Maria and Janick since
+// they live in the same app data — not per-device.
+const ESS_FAVORITE_CATEGORIES = [
+  { id: 'cat-fav-maria', emoji: '🩷', name: 'Marias Favoriten', dishes: [] },
+  { id: 'cat-fav-janick', emoji: '🩵', name: 'Janicks Favoriten', dishes: [] },
+];
+
 function essSlugify(s) {
   return (s || 'x').toLowerCase().replace(/[^a-z0-9äöüß]+/g, '-').replace(/(^-|-$)/g, '') || 'x';
 }
 
 function essDefaultData() {
-  return ESS_DEFAULT_DATA_RAW.map(([emoji, name, dishes], ci) => ({
+  const rest = ESS_DEFAULT_DATA_RAW.map(([emoji, name, dishes], ci) => ({
     id: 'cat-' + ci + '-' + essSlugify(name),
     emoji, name,
     dishes: dishes.map((d, di) => ({ id: 'cat-' + ci + '-d-' + di, name: d }))
   }));
+  return [
+    ...ESS_FAVORITE_CATEGORIES.map((c) => ({ ...c, dishes: [...c.dishes] })),
+    ...rest,
+  ];
+}
+
+// One-time migration so people who already saved data on their device (before
+// the favorite categories existed) still get them added, without touching
+// anything they've already customized.
+function essEnsureFavoriteCategories(categories) {
+  let changed = false;
+  const result = [...categories];
+  ESS_FAVORITE_CATEGORIES.forEach((fav) => {
+    if (!result.some((c) => c.id === fav.id)) {
+      result.unshift({ ...fav, dishes: [...fav.dishes] });
+      changed = true;
+    }
+  });
+  return { categories: result, changed };
 }
