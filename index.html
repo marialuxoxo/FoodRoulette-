@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Was essen wir heute?</title>
+<meta name="description" content="Dreh am Roulette und lass dir zufällig ein Gericht aus deiner eigenen Sammlung vorschlagen. Funktioniert komplett offline." />
+<meta name="theme-color" content="#c4501f" />
+<meta name="color-scheme" content="light" />
+
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" href="favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="64x64" href="icons/favicon-64.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Essensroulette" />
+
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="ess-header">
+  <div class="ess-logo"><span class="ess-logo-emoji">🍽️</span> Essensroulette</div>
+  <div class="ess-header-actions">
+    <button type="button" id="btn-history" class="ess-icon-btn" title="Verlauf" aria-label="Verlauf öffnen">🕘</button>
+    <button type="button" id="btn-edit" class="ess-icon-btn" title="Gerichte bearbeiten" aria-label="Gerichte bearbeiten">⚙️</button>
+  </div>
+</header>
+
+<main class="ess-card">
+
+  <!-- Start screen -->
+  <section id="screen-start" class="ess-screen is-active">
+    <div class="ess-emoji-row">🍝 🥘 🍕</div>
+    <div class="ess-greeting">Guten Hunger! 👋</div>
+    <h1 class="ess-title">Was gibt's heute?</h1>
+    <p class="ess-subtitle" id="start-subtitle">Dreh am Rad und lass dich überraschen.</p>
+    <button type="button" id="btn-start-spin" class="ess-btn-primary">🎲 Was essen wir heute?</button>
+  </section>
+
+  <!-- Category spin screen -->
+  <section id="screen-cat-spin" class="ess-screen">
+    <div class="ess-spin-label">Kategorie wird gewählt …</div>
+    <div class="ess-reel-viewport">
+      <div id="cat-reel-track" class="ess-reel-track"></div>
+      <div class="ess-reel-indicator"></div>
+    </div>
+    <div id="cat-landed" class="ess-landed" hidden></div>
+  </section>
+
+  <!-- Dish spin screen -->
+  <section id="screen-dish-spin" class="ess-screen">
+    <div class="ess-category-pill"><span id="dish-spin-cat-emoji"></span><span id="dish-spin-cat-name"></span></div>
+    <div class="ess-spin-label">Gericht wird ausgewählt …</div>
+    <div class="ess-reel-viewport">
+      <div id="dish-reel-track" class="ess-reel-track"></div>
+      <div class="ess-reel-indicator"></div>
+    </div>
+  </section>
+
+  <!-- Result screen -->
+  <section id="screen-result" class="ess-screen">
+    <div id="confetti-layer" class="ess-confetti-layer" aria-hidden="true"></div>
+    <div class="ess-result-kicker">Heute gibt's:</div>
+    <div class="ess-result-emoji" id="result-cat-emoji"></div>
+    <h2 class="ess-result-dish" id="result-dish-name"></h2>
+    <div class="ess-result-category" id="result-cat-name"></div>
+
+    <div class="ess-result-actions">
+      <button type="button" id="btn-spin-again" class="ess-btn-primary">🔁 Nochmal drehen</button>
+      <button type="button" id="btn-change-category" class="ess-btn-secondary">📂 Andere Kategorie</button>
+      <button type="button" id="btn-restart" class="ess-btn-ghost">Komplett neu starten</button>
+    </div>
+  </section>
+
+</main>
+
+<div id="install-banner" class="ess-install-banner">
+  <div class="ess-install-banner-text">Installiere die App für schnellen Zugriff – auch offline.</div>
+  <button type="button" id="btn-install" class="ess-install-banner-btn">Installieren</button>
+  <button type="button" id="btn-install-dismiss" class="ess-install-banner-dismiss" aria-label="Hinweis schließen">✕</button>
+</div>
+
+<div id="offline-pill" class="ess-offline-pill">📡 Offline – Alle Daten sind lokal gespeichert</div>
+
+<!-- History drawer -->
+<button type="button" id="history-backdrop" class="ess-overlay-backdrop" aria-label="Verlauf schließen"></button>
+<aside id="history-drawer" class="ess-drawer" aria-label="Verlauf">
+  <div class="ess-panel-header">
+    <h2 class="ess-panel-title">Verlauf</h2>
+    <button type="button" id="btn-history-close" class="ess-close-btn" aria-label="Schließen">✕</button>
+  </div>
+  <div id="history-list"></div>
+  <div id="history-empty" class="ess-history-empty">Noch keine Drehungen 🎯</div>
+</aside>
+
+<!-- Edit modal -->
+<button type="button" id="edit-backdrop" class="ess-overlay-backdrop" aria-label="Bearbeiten schließen"></button>
+<div id="edit-modal" class="ess-modal" role="dialog" aria-modal="true" aria-label="Gerichte bearbeiten">
+  <div class="ess-panel-header">
+    <h2 class="ess-panel-title">Gerichte bearbeiten</h2>
+    <button type="button" id="btn-edit-close" class="ess-close-btn" aria-label="Schließen">✕</button>
+  </div>
+
+  <div id="cat-list" class="ess-cat-list"></div>
+
+  <div class="ess-new-category">
+    <div class="ess-new-category-title">Neue Kategorie</div>
+    <div class="ess-new-category-row">
+      <input id="new-cat-emoji" class="ess-emoji-input" placeholder="🍜" maxlength="4" />
+      <input id="new-cat-name" class="ess-input" placeholder="Kategoriename" maxlength="60" />
+      <button type="button" id="btn-add-category" class="ess-add-category-btn">+</button>
+    </div>
+    <button type="button" id="btn-reset-defaults" class="ess-reset-btn">Auf Standardliste zurücksetzen</button>
+  </div>
+</div>
+
+<template id="tpl-history-item">
+  <div class="ess-history-item">
+    <div class="ess-history-emoji"></div>
+    <div class="ess-history-text">
+      <div class="ess-history-dish"></div>
+      <div class="ess-history-meta"></div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-cat-item">
+  <div class="ess-cat-item">
+    <button type="button" class="ess-cat-item-header">
+      <span class="ess-cat-item-emoji"></span>
+      <span class="ess-cat-item-name"></span>
+      <span class="ess-cat-item-count"></span>
+      <span class="ess-cat-item-remove" role="button" tabindex="0" title="Kategorie löschen">🗑</span>
+    </button>
+    <div class="ess-cat-item-body">
+      <div class="ess-dish-list"></div>
+      <div class="ess-add-row">
+        <input class="ess-input ess-new-dish-input" placeholder="Neues Gericht …" maxlength="80" />
+        <button type="button" class="ess-add-btn">+</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-dish-row">
+  <div class="ess-dish-row">
+    <span class="ess-dish-row-name"></span>
+    <button type="button" class="ess-dish-row-remove" aria-label="Gericht entfernen">✕</button>
+  </div>
+</template>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+<script src="js/pwa.js"></script>
+</body>
+</html>
