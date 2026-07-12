@@ -37,6 +37,11 @@
     <h1 class="ess-title">Was gibt's heute?</h1>
     <p class="ess-subtitle" id="start-subtitle">Dreh am Rad und lass dich überraschen.</p>
     <button type="button" id="btn-start-spin" class="ess-btn-primary">🎲 Was essen wir heute?</button>
+
+    <div class="ess-quick-pick">
+      <div class="ess-quick-pick-label">…oder direkt eine Kategorie wählen:</div>
+      <div id="quick-cat-list" class="ess-quick-cats"></div>
+    </div>
   </section>
 
   <!-- Category spin screen -->
@@ -149,6 +154,13 @@
     <span class="ess-dish-row-name"></span>
     <button type="button" class="ess-dish-row-remove" aria-label="Gericht entfernen">✕</button>
   </div>
+</template>
+
+<template id="tpl-quick-cat">
+  <button type="button" class="ess-quick-cat-btn">
+    <span class="ess-quick-cat-emoji"></span>
+    <span class="ess-quick-cat-name"></span>
+  </button>
 </template>
 
 <script src="js/data.js"></script>

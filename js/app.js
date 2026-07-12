@@ -15,6 +15,8 @@
   const els = {
     startSubtitle: $('start-subtitle'),
     btnStartSpin: $('btn-start-spin'),
+    quickPick: document.querySelector('.ess-quick-pick'),
+    quickCatList: $('quick-cat-list'),
 
     screens: {
       start: $('screen-start'),
@@ -58,6 +60,7 @@
     tplHistoryItem: $('tpl-history-item'),
     tplCatItem: $('tpl-cat-item'),
     tplDishRow: $('tpl-dish-row'),
+    tplQuickCat: $('tpl-quick-cat'),
   };
 
   const state = {
@@ -137,6 +140,39 @@
       els.btnStartSpin.style.opacity = '';
       els.btnStartSpin.style.cursor = '';
     }
+    renderQuickCategories();
+  }
+
+  function renderQuickCategories() {
+    els.quickCatList.innerHTML = '';
+    if (!state.categories.length) {
+      els.quickPick.style.display = 'none';
+      return;
+    }
+    els.quickPick.style.display = '';
+    const frag = document.createDocumentFragment();
+    state.categories.forEach((cat) => {
+      const node = els.tplQuickCat.content.cloneNode(true);
+      const btn = node.querySelector('.ess-quick-cat-btn');
+      node.querySelector('.ess-quick-cat-emoji').textContent = cat.emoji;
+      node.querySelector('.ess-quick-cat-name').textContent = cat.name;
+      const hasDishes = cat.dishes.length > 0;
+      btn.disabled = !hasDishes;
+      btn.title = hasDishes ? `${cat.name} auswählen` : `${cat.name} hat noch keine Gerichte`;
+      if (hasDishes) {
+        btn.addEventListener('click', () => quickSelectCategory(cat.id));
+      }
+      frag.appendChild(node);
+    });
+    els.quickCatList.appendChild(frag);
+  }
+
+  function quickSelectCategory(catId) {
+    const cat = state.categories.find((c) => c.id === catId);
+    if (!cat || !cat.dishes.length) return;
+    clearTimers();
+    state.selectedDish = null;
+    startDishSpin(cat);
   }
 
   function buildReel(items, targetIndex) {
